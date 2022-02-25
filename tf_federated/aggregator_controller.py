@@ -1,9 +1,15 @@
 from flask import Flask, jsonify, request
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
+
+import tensorflow_federated as tff
+
+from keras_utils import fetch_optimizer, fetch_callable_model
+from aggregator_model import AggregatorModel
 
 edgeNodes, inactiveNodes, sid_mapper = {}, {}, {}
 app = Flask(__name__)
 socket = SocketIO(app)
+aggregator = AggregatorModel()
 
 
 @socket.on('join')
@@ -24,6 +30,15 @@ def disconnected():
 	inactive_node = edgeNodes.get(nodeID)
 	inactiveNodes.update({nodeID: inactive_node})
 	edgeNodes.pop(nodeID)
+
+
+@socket.on('fetch_model')
+def fetch_model_request(json):
+	json['sid'] = request.sid
+	edge_node = int(json['nodeID'])
+	model_variables = aggregator.trainable_variables()
+	print(model_variables)
+	emit("fetch_model", {'model_variables': model_variables})
 
 
 """ 

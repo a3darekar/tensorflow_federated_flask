@@ -1,6 +1,6 @@
 from typing import Callable
 
-from tensorflow.keras import models
+from tensorflow.python.keras import models
 
 
 class Client:
