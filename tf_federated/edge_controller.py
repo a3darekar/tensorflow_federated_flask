@@ -23,12 +23,6 @@ def fetch_model():
 	message("fetch_model", "NONE")
 
 
-def fetch_data():
-	with open('data/data.txt', 'rb') as f:
-		data = pickle.load(f)
-	return [list(t) for t in zip(*data[f'node_{NODE_ID}'])]
-
-
 @sock.event
 def connect():
 	data = assemble_data()
@@ -114,6 +108,15 @@ def run():
 				if task.strip().lower() == '2':
 					score = evaluate_model(x_test, y_test)
 					print(f"Evaluation Accuracy: {score}")
+					score = evaluate_model(x_test, y_test)
+					if score:
+						print(f"Evaluation Accuracy: {score[1]}")
+				if task.strip().lower() == '3':
+					training_dict = {'batch_size': 64, 'epochs': 10, 'verbose': 1, 'validation_split': 0.2}
+					hist = model.edge_train(client_train_dict=training_dict)
+					print(f"Hist: {hist}")
+				if task.strip().lower() == '4':
+					model.save_local_weights()
 				print("\n\n\n")
 	except KeyboardInterrupt:
 		print("KeyboardInterrupt occurred.")

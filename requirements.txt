@@ -29,6 +29,7 @@ itsdangerous==2.1.0
 jax==0.2.28
 jaxlib==0.1.76
 Jinja2==3.0.3
+joblib==1.1.0
 keras==2.8.0
 Keras-Preprocessing==1.1.2
 libclang==13.0.0
@@ -50,6 +51,7 @@ python-socketio==5.5.2
 requests==2.27.1
 requests-oauthlib==1.3.1
 rsa==4.8
+scikit-learn==1.0.2
 scipy==1.8.0
 semantic-version==2.8.5
 simple-websocket==0.5.1
@@ -57,8 +59,10 @@ six==1.16.0
 tensorboard==2.8.0
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
+tensorflow==2.8.0
 tensorflow-datasets==4.5.2
 tensorflow-estimator==2.8.0
+tensorflow-federated==0.20.0
 tensorflow-io-gcs-filesystem==0.24.0
 tensorflow-metadata==1.6.0
 tensorflow-model-optimization==0.7.1
@@ -66,6 +70,7 @@ tensorflow-privacy==0.7.3
 tensorflow-probability==0.16.0
 termcolor==1.1.0
 tf-estimator-nightly==2.8.0.dev2021122109
+threadpoolctl==3.1.0
 tqdm==4.28.1
 typing_extensions==4.1.1
 urllib3==1.26.8
