@@ -1,7 +1,9 @@
 import time
 import pickle
 import socketio
-from setup import NODE_ID, APP_URL
+from tensorflow.python.keras.utils.np_utils import to_categorical
+
+from setup import NODE_ID, APP_URL, DATA_FILE
 from tf_federated.edge_model import Client
 from keras_utils import create_keras_model
 from sklearn.model_selection import train_test_split
@@ -75,17 +77,18 @@ def await_reconnection_command():
 
 
 def fetch_data():
-	with open('data/data.txt', 'rb') as f:
+	with open(DATA_FILE, 'rb') as f:
 		data = pickle.load(f)
-	return [list(t) for t in zip(*data[f'node_{NODE_ID}'])]
+	return [t for t in data[f'node_{NODE_ID}'].values()]   # return [list(t) for t in zip(*data[f'node_{NODE_ID}'])]
 
 
 def run():
 	x_data, labels = fetch_data()
 	x_train, x_test, y_train, y_test = train_test_split(x_data, labels, test_size=0.33)
+	y_train, y_test = to_categorical(y_train), to_categorical(y_test)
 	model._init_model(create_keras_model, model_weights='weights')
 	model.receive_data(x_train, y_train)
-	print(model.client_id)
+	print("Starting Node ", model.client_id)
 	try:
 		if not NODE_ID:
 			print("ERROR! Could not load Node identity")
@@ -112,7 +115,8 @@ def run():
 					if score:
 						print(f"Evaluation Accuracy: {score[1]}")
 				if task.strip().lower() == '3':
-					training_dict = {'batch_size': 64, 'epochs': 10, 'verbose': 1, 'validation_split': 0.2}
+					# training_dict = {'batch_size': 64, 'epochs': 10, 'verbose': 1, 'validation_split': 0.2}
+					training_dict = {'epochs': 10, 'validation_split': 0.33}
 					hist = model.edge_train(client_train_dict=training_dict)
 					print(f"Hist: {hist}")
 				if task.strip().lower() == '4':
