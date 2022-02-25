@@ -1,7 +1,8 @@
 import collections
 import tensorflow as tf
 import tensorflow_federated as tff
-
+from tensorflow.python.keras import models
+from keras import backend as K
 from setup import INPUT_SHAPE, CLASS_COUNT
 
 ModelVariables = collections.namedtuple(
@@ -64,6 +65,15 @@ def get_local_metrics(variables):
 
 
 def fetch_model(model_file=None):
-	from tensorflow.keras.models import load_model
-	model = load_model(model_file)
+	model = models.load_model(model_file)
+	import numpy as np
+	# readWeights
+	weights = np.array()
+	set_model_weights(model, weights)
 	return model
+
+
+def set_model_weights(model: models.Model, weight_list):
+	for i, symbolic_weights in enumerate(model.weights):
+		weight_values = weight_list[i]
+		K.set_value(symbolic_weights, weight_values)
