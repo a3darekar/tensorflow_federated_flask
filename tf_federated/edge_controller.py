@@ -1,7 +1,7 @@
 import time
 import socketio
 from setup import NODE_ID, APP_URL
-from tensorflow_federated.edge_model import Client
+from tf_federated.edge_model import Client
 
 model = Client(NODE_ID)
 sock = socketio.Client()
