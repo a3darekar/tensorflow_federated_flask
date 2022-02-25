@@ -1,6 +1,11 @@
+import os
 from typing import Callable
 
 from tensorflow.python.keras import models
+import numpy as np
+import tensorflow.python.keras.losses
+
+from keras_utils import set_model_weights, get_rid_of_the_models
 
 
 class Client:
@@ -12,8 +17,13 @@ class Client:
 
 	def _init_model(self, model_fn: Callable, model_weights=None):
 		model = model_fn()
-		if model_weights:
-			fed_learn.set_model_weights(model, model_weights)
+		if model_weights and os.path.isfile(model_weights):
+			set_model_weights(model, model_weights)
+		model.compile(
+			loss=tensorflow.keras.losses.categorical_crossentropy,
+			optimizer=tensorflow.keras.optimizers.Adadelta(),
+			metrics=['accuracy']
+			)
 		self.model = model
 
 	def receive_data(self, x, y):
@@ -31,4 +41,16 @@ class Client:
 		return hist
 
 	def reset_model(self):
-		fed_learn.get_rid_of_the_models(self.model)
+		get_rid_of_the_models(self.model)
+
+	def evaluate(self, x, y):
+		try:
+			return self.model.evaluate(x, y)
+		except AttributeError as e:
+			print("Model not found")
+		return None
+
+	def save_local_weights(self):
+		weights = self.model.get_weights()
+		np.save('weights', weights)
+		print("Saved Local weights")
