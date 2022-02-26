@@ -86,7 +86,7 @@ def run():
 	x_data, labels = fetch_data()
 	x_train, x_test, y_train, y_test = train_test_split(x_data, labels, test_size=0.33)
 	y_train, y_test = to_categorical(y_train), to_categorical(y_test)
-	model._init_model(create_keras_model, model_weights='weights')
+	model.init_model(create_keras_model, model_weights='weights')
 	model.receive_data(x_train, y_train)
 	print("Starting Node ", model.client_id)
 	try:

@@ -3,8 +3,8 @@ from flask_socketio import SocketIO, emit
 
 import tensorflow_federated as tff
 
-from keras_utils import fetch_optimizer, fetch_callable_model
 from aggregator_model import AggregatorModel
+# from keras_utils import
 
 edgeNodes, inactiveNodes, sid_mapper = {}, {}, {}
 app = Flask(__name__)
