@@ -3,7 +3,7 @@ from flask_socketio import SocketIO, emit
 
 import tensorflow_federated as tff
 
-from aggregator_model import AggregatorModel
+from tf_federated.aggregator_model import AggregatorModel
 # from keras_utils import
 
 edgeNodes, inactiveNodes, sid_mapper = {}, {}, {}
@@ -15,6 +15,7 @@ aggregator = AggregatorModel()
 @socket.on('join')
 def welcome_call(json):
 	json['sid'] = request.sid
+	print(json)
 	edge_node = int(json['nodeID'])
 	sid_mapper.update({request.sid: edge_node})
 	if edge_node in inactiveNodes.keys():

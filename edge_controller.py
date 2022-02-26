@@ -1,11 +1,15 @@
+import os
+import sys
 import time
 import pickle
+
+import numpy as np
 import socketio
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from setup import NODE_ID, APP_URL, DATA_FILE
 from tf_federated.edge_model import Client
-from keras_utils import create_keras_model
+from tf_federated.keras_utils import create_keras_model
 from sklearn.model_selection import train_test_split
 
 model = Client(NODE_ID)
@@ -77,9 +81,14 @@ def await_reconnection_command():
 
 
 def fetch_data():
-	with open(DATA_FILE, 'rb') as f:
+	try:
+		f = open(f"{DATA_FILE}", 'rb')
 		data = pickle.load(f)
-	return [t for t in data[f'node_{NODE_ID}'].values()]   # return [list(t) for t in zip(*data[f'node_{NODE_ID}'])]
+		data = data[f'node_{NODE_ID}']
+		return np.array([t[0] for t in data]), np.array([t[1] for t in data])
+	except OSError:
+		print(f"Error accessing data. Please check if {DATA_FILE} file exists")   # return [list(t) for t in zip(*data[f'node_{NODE_ID}'])]
+		sys.exit()
 
 
 def run():
@@ -88,7 +97,7 @@ def run():
 	y_train, y_test = to_categorical(y_train), to_categorical(y_test)
 	model.init_model(create_keras_model, model_weights='weights')
 	model.receive_data(x_train, y_train)
-	print("Starting Node ", model.client_id)
+
 	try:
 		if not NODE_ID:
 			print("ERROR! Could not load Node identity")
@@ -97,6 +106,7 @@ def run():
 			exit(0)
 		while True:
 			if not sock.connected:
+				print("Attempting Connection")
 				reconnect()
 			else:
 				print("Press Ctrl + C to terminate.")
@@ -110,13 +120,11 @@ def run():
 					fetch_model()
 				if task.strip().lower() == '2':
 					score = evaluate_model(x_test, y_test)
-					print(f"Evaluation Accuracy: {score}")
-					score = evaluate_model(x_test, y_test)
 					if score:
-						print(f"Evaluation Accuracy: {score[1]}")
+						print("Evaluation Accuracy: %.2f" % score[1])
 				if task.strip().lower() == '3':
-					# training_dict = {'batch_size': 64, 'epochs': 10, 'verbose': 1, 'validation_split': 0.2}
-					training_dict = {'epochs': 10, 'validation_split': 0.33}
+					training_dict = {'batch_size': 64, 'epochs': 10, 'verbose': 1, 'validation_split': 0.2}
+					# training_dict = {'epochs': 10, 'validation_split': 0.33}
 					hist = model.edge_train(client_train_dict=training_dict)
 					print(f"Hist: {hist}")
 				if task.strip().lower() == '4':
