@@ -1,6 +1,11 @@
 import pickle
 import random
 
+epochs = 5
+batch_size = 4096
+buffer = 100
+pref_buffer = 10
+
 
 def fetch_data():
 	with open('data/x_data.txt', 'rb') as f:
@@ -18,7 +23,7 @@ def create_clients(data, labels, num_clients=3, initial='clients'):
 
 	size = len(data) // num_clients
 	shards = [data[i: i + size] for i in range(0, size * num_clients, size)]
-	print(len(shards))
+	print(f"Generated {len(shards)} equal parts of data")
 	assert (len(shards) == num_clients)
 
 	return {client_names[i]: shards[i] for i in range(num_clients)}
