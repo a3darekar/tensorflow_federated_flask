@@ -1,4 +1,6 @@
 import collections
+import os
+
 import tensorflow as tf
 import tensorflow_federated as tff
 from tensorflow.python.keras import models
@@ -9,19 +11,15 @@ ModelVariables = collections.namedtuple(
 	'ModelVariables', 'weights bias num_examples loss_sum accuracy_sum'
 )
 
+input_spec = collections.OrderedDict(
+	x=tf.TensorSpec(dtype=tf.float32, shape=INPUT_SHAPE),
+	y=tf.TensorSpec(shape=[None, CLASS_COUNT], dtype=tf.float32))
+
 
 def create_variables():
 	return ModelVariables(
-		weights=tf.Variable(
-			lambda: tf.zeros(dtype=tf.float32, shape=INPUT_SHAPE),
-			name='weights',
-			trainable=True
-		),
-		bias=tf.Variable(
-			lambda: tf.zeros(dtype=tf.float32, shape=CLASS_COUNT),
-			name='bias',
-			trainable=True
-		),
+		weights=None,
+		bias=None,
 		num_examples=tf.Variable(0.0, name='num_examples', trainable=False),
 		loss_sum=tf.Variable(0.0, name='loss_sum', trainable=False),
 		accuracy_sum=tf.Variable(0.0, name='accuracy_sum', trainable=False)
@@ -69,7 +67,10 @@ def fetch_model(model_file=None):
 	import numpy as np
 	# readWeights
 	weights = np.array()
-	set_model_weights(model, weights)
+	if model_file and os.path.isfile(model_file):
+		print("Loading model with saved weights")
+		weights = np.load(model_file, allow_pickle=True)
+		model.set_weights(weights)
 	return model
 
 
@@ -77,3 +78,33 @@ def set_model_weights(model: models.Model, weight_list):
 	for i, symbolic_weights in enumerate(model.weights):
 		weight_values = weight_list[i]
 		K.set_value(symbolic_weights, weight_values)
+
+
+def create_keras_model():
+	return tf.keras.Sequential([
+		tf.keras.layers.Input(shape=tuple(INPUT_SHAPE)),
+		tf.keras.layers.Dense(512),
+		tf.keras.layers.Activation('relu'),
+		tf.keras.layers.Dropout(0.2),
+		tf.keras.layers.Flatten(),
+		tf.keras.layers.Dense(512),
+		tf.keras.layers.Activation('relu'),
+		tf.keras.layers.Dense(10, activation="softmax"),
+	])
+
+
+def fetch_callable_model():
+	return tff.learning.from_keras_model(
+		keras_model=create_keras_model(),
+		input_spec=input_spec,
+		loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+		metrics=[tf.keras.metrics.SparseCategoricalAccuracy()]
+	)
+
+
+def fetch_optimizer(learning_rate=None):
+	return tf.keras.optimizers.SGD(learning_rate)
+
+
+def get_rid_of_the_models():
+	return None
