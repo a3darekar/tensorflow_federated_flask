@@ -1,4 +1,6 @@
 import collections
+from typing import Callable, List, OrderedDict
+
 import tensorflow as tf
 import tensorflow_federated as tff
 from setup import INPUT_SHAPE
@@ -8,6 +10,7 @@ from tf_federated.keras_utils import create_variables, forward_pass, predict_on_
 
 class AggregatorModel(tff.learning.Model):
 	def __init__(self):
+		super(tff.learning.Model, self).__init__()
 		self._variables = create_variables()
 
 	@property
@@ -50,3 +53,22 @@ class AggregatorModel(tff.learning.Model):
 	@property
 	def federated_output_computation(self):
 		return aggregate_metrics
+
+	@tf.function
+	def report_local_unfinalized_metrics(
+			self) -> OrderedDict[str, List[tf.Tensor]]:
+		"""Creates an `OrderedDict` of metric names to unfinalized values."""
+		return collections.OrderedDict(
+			num_examples = [self._variables.num_examples],
+			loss = [self._variables.loss_sum, self._variables.num_examples],
+			accuracy = [self._variables.accuracy_sum, self._variables.num_examples]
+		)
+
+	def metric_finalizers(
+			self) -> OrderedDict[str, Callable[[List[tf.Tensor]], tf.Tensor]]:
+		"""Creates an `OrderedDict` of metric names to finalizers."""
+		return collections.OrderedDict(
+			num_examples=tf.function(func=lambda x: x[0]),
+			loss=tf.function(func=lambda x: x[0] / x[1]),
+			accuracy=tf.function(func=lambda x: x[0] / x[1])
+		)
