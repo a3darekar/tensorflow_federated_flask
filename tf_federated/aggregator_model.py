@@ -15,7 +15,14 @@ class AggregatorModel(tff.learning.Model):
 
 	@property
 	def trainable_variables(self):
-		return [self._variables.weights, self._variables.bias]
+		return {
+			'dense_kernel_0': self._variables.dense_kernel_0.numpy().tolist(),
+			'dense_bias_0': self._variables.dense_bias_0.numpy().tolist(),
+			'dense_1_kernel_0': self._variables.dense_1_kernel_0.numpy().tolist(),
+			'dense_1_bias_0': self._variables.dense_1_bias_0.numpy().tolist(),
+			'dense_2_kernel_0': self._variables.dense_2_kernel_0.numpy().tolist(),
+			'dense_2_bias_0': self._variables.dense_2_bias_0.numpy().tolist()
+		}
 
 	@property
 	def non_trainable_variables(self):
