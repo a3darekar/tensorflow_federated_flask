@@ -12,3 +12,14 @@ if NODE != 'edge':
 	PORT = 5000  # 'admin'
 else:
 	PORT = 5000 + NODE_ID  # 'edge'
+
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
+status = {
+	'init': "INITIALIZING",
+	'idle': "IDLE",
+	'busy': "BUSY",
+	'train': "TRAINING",
+	'eval': "EVALUATING",
+	'down': "DISCONNECTED"
+}
