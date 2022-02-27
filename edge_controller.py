@@ -7,21 +7,23 @@ import numpy as np
 import socketio
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
-from setup import NODE_ID, APP_URL, DATA_FILE
+from setup import NODE_ID, APP_URL, DATA_FILE, status
 from tf_federated.edge_model import Client
 from tf_federated.keras_utils import create_keras_model
 from sklearn.model_selection import train_test_split
 
 model = Client(NODE_ID)
 sock = socketio.Client()
+NODE_STATUS = status['init']
 
 
 def assemble_data():
-	node_id = NODE_ID
-	return {'nodeID': NODE_ID}
+	return {'nodeID': NODE_ID, 'node_status': NODE_STATUS}
 
 
 def evaluate_model(x, y):
+	global NODE_STATUS
+	NODE_STATUS = status['eval']
 	return model.evaluate(x, y)
 
 
@@ -31,6 +33,8 @@ def fetch_model():
 
 @sock.event
 def connect():
+	global NODE_STATUS
+	NODE_STATUS = status['idle']
 	data = assemble_data()
 	message('join', data)
 	print("connected!")
@@ -41,12 +45,12 @@ def reconnect():
 	try:
 		sock.connect(APP_URL)
 	except Exception as e:
-		print(e)
+		...
 
 
 @sock.event
 def connect_error(error_message):
-	print(error_message + " Trying to reconnect in 5 seconds")
+	print("Problem establishing connection Trying in 5 seconds")
 	try:
 		time.sleep(5)
 	except KeyboardInterrupt:
@@ -60,6 +64,8 @@ def connect_error(error_message):
 
 @sock.event
 def disconnect():
+	global NODE_STATUS
+	NODE_STATUS = status['down']
 	print("Disconnected!")
 
 
@@ -108,6 +114,7 @@ def run():
 			if not sock.connected:
 				print("Attempting Connection")
 				reconnect()
+
 			else:
 				print("Press Ctrl + C to terminate.")
 				print("1. Fetch Global Model \n2. Evaluate on validation set.\n3. Train Model locally.\n4. Save Model locally.\n")
