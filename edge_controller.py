@@ -69,6 +69,16 @@ def disconnect():
 	print("Disconnected!")
 
 
+@sock.on('fetch_model')
+def receive_model(json):
+	weights = []
+	for key, value in json['model_variables'].items():
+		weights.append(np.array(value))
+	if len(weights) > 0:
+		model.init_model(create_keras_model, weights)
+	print("model fetched successfully!")
+
+
 def message(event, data):
 	sock.emit(event, data)
 
