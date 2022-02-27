@@ -15,7 +15,6 @@ aggregator = AggregatorModel()
 @socket.on('join')
 def welcome_call(json):
 	json['sid'] = request.sid
-	print(json)
 	edge_node = int(json['nodeID'])
 	sid_mapper.update({request.sid: edge_node})
 	if edge_node in inactiveNodes.keys():
@@ -34,11 +33,8 @@ def disconnected():
 
 
 @socket.on('fetch_model')
-def fetch_model_request(json):
-	json['sid'] = request.sid
-	edge_node = int(json['nodeID'])
-	model_variables = aggregator.trainable_variables()
-	print(model_variables)
+def fetch_model_request():
+	model_variables = aggregator.trainable_variables
 	emit("fetch_model", {'model_variables': model_variables})
 
 
@@ -50,5 +46,5 @@ def fetch_model_request(json):
 
 @app.route('/')
 def index():
-	registered_users = {'active': edgeNodes, 'inactive': inactiveNodes}
+	registered_users = {'active': edgeNodes, 'inactive': inactiveNodes, "sid_mapper": sid_mapper}
 	return jsonify(registered_users)
