@@ -31,6 +31,18 @@ def fetch_model():
 	message("fetch_model", "NONE")
 
 
+"""
+	Socket events. Triggered as method calls on request from clients.
+	'join' 			=> welcome_call method: Ads the edge node to active nodes.
+	'disconnect'	=> disconnected method: Moves the disconnected active Edge to the list of inactive nodes.
+	'fetch_model'	=> fetchModelRequest method: Sends the global model variables to the edge node.
+	
+	Helper methods used by socket events:
+	'reconnect'		=> reconnection helper method: Calls connect method periodically. Requires further improvement 
+	'message'		=> Event trigger helper method: A simple extraction for message passing to Aggr via events 
+"""
+
+
 @sock.event
 def connect():
 	global NODE_STATUS
@@ -94,6 +106,13 @@ def await_reconnection_command():
 			exit(0)
 		else:
 			print("Invalid input")
+
+
+"""
+	Model handling methods. Triggered by CLI or via RPC through socket connection
+	'fetch_data' 	=> data access method: Reads stored in DATA_FILE location..
+	'init_model'	=> ML model init method: calls fetch data, and initializes the model. 
+"""
 
 
 def fetch_data():
