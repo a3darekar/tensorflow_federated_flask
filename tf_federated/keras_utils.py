@@ -8,7 +8,8 @@ from keras import backend as K
 from setup import INPUT_SHAPE, CLASS_COUNT
 
 ModelVariables = collections.namedtuple(
-	'ModelVariables', 'weights bias num_examples loss_sum accuracy_sum'
+	'ModelVariables', 'dense_kernel_0 dense_bias_0 dense_1_kernel_0 dense_1_bias_0 dense_2_kernel_0 dense_2_bias_0 '
+					  'num_examples loss_sum accuracy_sum '
 )
 
 input_spec = collections.OrderedDict(
@@ -18,8 +19,31 @@ input_spec = collections.OrderedDict(
 
 def create_variables():
 	return ModelVariables(
-		weights=None,
-		bias=None,
+		dense_kernel_0=tf.Variable(
+			lambda: tf.zeros(shape=(28, 512), dtype=tf.float32),
+			name='dense/kernel:0',
+			trainable=True),
+		dense_bias_0=tf.Variable(
+			lambda: tf.zeros(shape=(512,), dtype=tf.float32),
+			name='dense/bias:0',
+			trainable=True),
+		dense_1_kernel_0=tf.Variable(
+			lambda: tf.zeros(shape=(14336, 512), dtype=tf.float32),
+			name='dense_1/kernel:0',
+			trainable=True),
+		dense_1_bias_0=tf.Variable(
+			lambda: tf.zeros(shape=(512,), dtype=tf.float32),
+			name='dense_1/bias:0',
+			trainable=True),
+		dense_2_kernel_0=tf.Variable(
+			lambda: tf.zeros(shape=(512, 10), dtype=tf.float32),
+			name='dense_2/kernel:0',
+			trainable=True),
+		dense_2_bias_0=tf.Variable(
+			lambda: tf.zeros(shape=(10,), dtype=tf.float32),
+			name='dense_2/bias:0',
+			trainable=True
+		),
 		num_examples=tf.Variable(0.0, name='num_examples', trainable=False),
 		loss_sum=tf.Variable(0.0, name='loss_sum', trainable=False),
 		accuracy_sum=tf.Variable(0.0, name='accuracy_sum', trainable=False)
