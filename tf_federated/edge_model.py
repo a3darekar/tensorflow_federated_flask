@@ -17,10 +17,17 @@ class Client:
 
 	def init_model(self, model_fn: Callable, model_weights=None):
 		model = model_fn()
-		if model_weights and os.path.isfile(model_weights):
-			print("Loading model with saved weights")
-			weights = np.load(model_weights, allow_pickle=True)
-			model.set_weights(weights)
+		if model_weights:
+			if isinstance(model_weights, list):
+				model.set_weights(model_weights)
+			elif os.path.isfile(model_weights):
+				print("Loading model with saved weights")
+				weights = np.load(model_weights, allow_pickle=True)
+				model.set_weights(weights)
+			else:
+				print("model_weights", model_weights)
+				# print("Unrecognizable weights type: ". type(model_weights))
+				pass
 		else:
 			print("Loading fresh model")
 		model.compile(
