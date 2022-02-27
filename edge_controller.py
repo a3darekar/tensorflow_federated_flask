@@ -97,13 +97,21 @@ def fetch_data():
 		sys.exit()
 
 
-def run():
+def init_model(_model):
+
 	x_data, labels = fetch_data()
 	x_train, x_test, y_train, y_test = train_test_split(x_data, labels, test_size=0.33)
 	y_train, y_test = to_categorical(y_train), to_categorical(y_test)
-	model.init_model(create_keras_model, model_weights='weights')
-	model.receive_data(x_train, y_train)
+	_model.init_model(create_keras_model, model_weights=f"weights_{NODE_ID}.npy")
+	_model.receive_data(x_train, y_train)
+	global NODE_STATUS
+	NODE_STATUS = status['idle']
+	return _model, x_test, y_test
 
+
+def run():
+	global model
+	model, x_test, y_test = init_model(model)
 	try:
 		if not NODE_ID:
 			print("ERROR! Could not load Node identity")
