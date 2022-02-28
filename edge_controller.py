@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 import pickle
@@ -59,13 +58,13 @@ def reconnect():
 	print("Attempting Connection")
 	try:
 		sock.connect(APP_URL)
-	except Exception as e:
+	except Exception:
 		...
 
 
 @sock.event
-def connect_error(error_message):
-	print("Problem establishing connection Trying in 5 seconds")
+def connect_error():
+	print("Problem establishing connection. Trying in 5 seconds")
 	try:
 		time.sleep(5)
 	except KeyboardInterrupt:
@@ -140,19 +139,18 @@ def fetch_data():
 
 
 def init_model(_model):
-	global x_test, y_test
 	x_data, labels = fetch_data()
-	x_train, x_test, y_train, y_test = train_test_split(x_data, labels, test_size=0.33)
-	y_train, y_test = to_categorical(y_train), to_categorical(y_test)
+	x_train, _x_test, y_train, _y_test = train_test_split(x_data, labels, test_size=0.33)
+	y_train, _y_test = to_categorical(y_train), to_categorical(_y_test)
 	_model.init_model(create_keras_model, model_weights=f"weights_{NODE_ID}.npy")
 	_model.receive_data(x_train, y_train)
 	global NODE_STATUS
 	NODE_STATUS = status['idle']
-	return _model, x_test, y_test
+	return _model, _x_test, _y_test
 
 
 def run():
-	global model
+	global model, x_test, y_test
 	model, x_test, y_test = init_model(model)
 	try:
 		if not NODE_ID:
@@ -167,8 +165,9 @@ def run():
 
 			else:
 				print("Press Ctrl + C to terminate.")
-				print("1. Fetch Global Model \n2. Evaluate on validation set.\n3. Train Model locally.\n4. Save Model locally.\n")
-				task = input("Input Task to perform. \nType in (d|D) to disconnect: \n")
+				print("1. Fetch Global Model \n2. Evaluate on validation set.\n3. Train Model locally.")
+				print("4. Save Model locally.\n\nType in (d|D) to disconnect:\n")
+				task = input("Input Task to perform: \t")
 				if task.strip().lower() == 'd':
 					sock.disconnect()
 					await_reconnection_command()
