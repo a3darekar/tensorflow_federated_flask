@@ -12,7 +12,7 @@ from tf_federated.edge_model import Client
 from tf_federated.keras_utils import create_keras_model
 from sklearn.model_selection import train_test_split
 
-model = Client(NODE_ID)
+model, x_test, y_test = Client(NODE_ID), None, None
 sock = socketio.Client()
 NODE_STATUS = status['init']
 
@@ -32,10 +32,13 @@ def fetch_model():
 
 
 """
-	Socket events. Triggered as method calls on request from clients.
+	Socket Connectivity events. Triggered as method calls on request from clients.
 	'join' 			=> welcome_call method: Ads the edge node to active nodes.
 	'disconnect'	=> disconnected method: Moves the disconnected active Edge to the list of inactive nodes.
+	
+	Operational Socket events. Triggerd for operational event handling and communication between nodes  
 	'fetch_model'	=> fetchModelRequest method: Sends the global model variables to the edge node.
+	'eval_model' 	=> 
 	
 	Helper methods used by socket events:
 	'reconnect'		=> reconnection helper method: Calls connect method periodically. Requires further improvement 
@@ -91,6 +94,15 @@ def receive_model(json):
 	print("model fetched successfully!")
 
 
+@sock.on('evaluate_edge')
+def eval_model():
+	if x_test and y_test:
+		score = evaluate_model(x_test, y_test)
+		message('eval_results: ', score)
+	else:
+		message("eval_results :", "Evaluation failed")
+
+
 def message(event, data):
 	sock.emit(event, data)
 
@@ -122,12 +134,13 @@ def fetch_data():
 		data = data[f'node_{NODE_ID}']
 		return np.array([t[0] for t in data]), np.array([t[1] for t in data])
 	except OSError:
-		print(f"Error accessing data. Please check if {DATA_FILE} file exists")   # return [list(t) for t in zip(*data[f'node_{NODE_ID}'])]
+		print(f"Error accessing data. Please check if {DATA_FILE} file exists")
+		# return [list(t) for t in zip(*data[f"node_{NODE_ID}"])]
 		sys.exit()
 
 
 def init_model(_model):
-
+	global x_test, y_test
 	x_data, labels = fetch_data()
 	x_train, x_test, y_train, y_test = train_test_split(x_data, labels, test_size=0.33)
 	y_train, y_test = to_categorical(y_train), to_categorical(y_test)
