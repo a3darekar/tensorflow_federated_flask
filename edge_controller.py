@@ -149,6 +149,12 @@ def init_model(_model):
 	return _model, _x_test, _y_test
 
 
+def print_task_inputs():
+	print("Press Ctrl + C to terminate.")
+	print("1. Fetch Global Model \n2. Evaluate on validation set.\n3. Train Model locally.")
+	print("4. Save Model locally.\n\nType in (d|D) to disconnect:\n")
+
+
 def run():
 	global model, x_test, y_test
 	model, x_test, y_test = init_model(model)
@@ -164,9 +170,7 @@ def run():
 				reconnect()
 
 			else:
-				print("Press Ctrl + C to terminate.")
-				print("1. Fetch Global Model \n2. Evaluate on validation set.\n3. Train Model locally.")
-				print("4. Save Model locally.\n\nType in (d|D) to disconnect:\n")
+				print_task_inputs()
 				task = input("Input Task to perform: \t")
 				if task.strip().lower() == 'd':
 					sock.disconnect()
