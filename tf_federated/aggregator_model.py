@@ -1,17 +1,32 @@
 import collections
+import os
 from typing import Callable, List, OrderedDict
 
+import numpy as np
 import tensorflow as tf
 import tensorflow_federated as tff
-from setup import INPUT_SHAPE
+from setup import AGGR_MODEL_FILE
 from tf_federated.keras_utils import create_variables, forward_pass, predict_on_batch, aggregate_metrics, \
-	get_local_metrics
+	get_local_metrics, create_keras_model, input_spec
 
 
 class AggregatorModel(tff.learning.Model):
 	def __init__(self):
 		super(tff.learning.Model, self).__init__()
 		self._variables = create_variables()
+
+	def get_model(self):
+		model = create_keras_model()
+		if os.path.isfile(AGGR_MODEL_FILE):
+			print("Loading model with saved weights")
+			weights = np.load('weights.npy', allow_pickle=True)
+			model.set_weights(weights)
+		return tff.learning.from_keras_model(
+			model,
+			input_spec=self.input_spec,
+			loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+			metrics=[tf.keras.metrics.SparseCategoricalAccuracy()]
+		)
 
 	@property
 	def trainable_variables(self):
@@ -37,9 +52,7 @@ class AggregatorModel(tff.learning.Model):
 
 	@property
 	def input_spec(self):
-		return collections.OrderedDict(
-			x=tf.TensorSpec(INPUT_SHAPE, tf.float32),
-			y=tf.TensorSpec([None, 1], tf.int32))
+		return input_spec
 
 	@tf.function
 	def predict_on_batch(self, x, training=True):
