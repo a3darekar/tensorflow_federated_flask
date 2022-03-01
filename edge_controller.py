@@ -96,10 +96,13 @@ def receive_model(json):
 @sock.on('evaluate_edge')
 def eval_model(*args, **kwargs):
 	if x_test is not None and y_test is not None:
-		score = evaluate_model(x_test, y_test)
-		message('eval_results: ', score)
+		eval_loss, eval_score = evaluate_model(x_test, y_test)
+		report = {'loss': eval_loss, 'score': eval_score}
+		print(f"Evaluation Accuracy: {report} \n\n")
+		message('eval_results', report)
 	else:
 		message("eval_results :", "Evaluation failed")
+	print_task_inputs()
 
 
 def message(event, data):
