@@ -35,7 +35,7 @@ def get_global_model():
 
 
 @socket.on('fetch_model')
-def fetch_model():
+def fetch_model(*args, **kwargs):
 	print("fetch_model")
 	emit("fetch_model", get_global_model())
 
@@ -76,7 +76,6 @@ def fetch_eval():
 @app.route('/send')
 def send_global_model():
 	model_data = get_global_model()
-	print(type(model_data))
 	for nodeID, node in edgeNodes.items():
 		emit("fetch_model", model_data, namespace='/', to=node['sid'])
 	return jsonify({"status": 200, "response": "success"})
