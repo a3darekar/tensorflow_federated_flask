@@ -46,6 +46,12 @@ def eval_report_handler(json):
 	edgeNodes[edge_node].update({"eval_report": json})
 
 
+@socket.on('training_results')
+def eval_report_handler(json):
+	edge_node = sid_mapper[request.sid]
+	edgeNodes[edge_node].update({"training_results": json})
+
+
 """ 
 	Flask server methods. Use browser to access each of these methods.
 	'/' 		=> index method: Displays lists of active Edge nodes as well as inactive nodes.
@@ -78,4 +84,12 @@ def send_global_model():
 	model_data = get_global_model()
 	for nodeID, node in edgeNodes.items():
 		emit("fetch_model", model_data, namespace='/', to=node['sid'])
+	return jsonify({"status": 200, "response": "success"})\
+
+
+@app.route('/train')
+def start_tff_training():
+	model_data = get_global_model()
+	for nodeID, node in edgeNodes.items():
+		emit("train_model", model_data, namespace='/', to=node['sid'])
 	return jsonify({"status": 200, "response": "success"})
