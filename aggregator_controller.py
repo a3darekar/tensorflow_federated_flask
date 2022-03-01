@@ -40,6 +40,12 @@ def fetch_model():
 	emit("fetch_model", get_global_model())
 
 
+@socket.on('eval_results')
+def eval_report_handler(json):
+	edge_node = sid_mapper[request.sid]
+	edgeNodes[edge_node].update({"eval_report": json})
+
+
 """ 
 	Flask server methods. Use browser to access each of these methods.
 	'/' 		=> index method: Displays lists of active Edge nodes as well as inactive nodes.
