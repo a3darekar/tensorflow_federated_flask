@@ -44,7 +44,8 @@ def fetch_model():
 	
 	Operational Socket events. Triggerd for operational event handling and communication between nodes  
 	'fetch_model'	=> fetchModelRequest method: Sends the global model variables to the edge node.
-	'eval_model' 	=> 
+	'eval_model' 	=> Model Eval report request. Evaluates model performance and returns accuracy and loss values 
+	'train_model' 	=> Model train request. Initiates model training phase and returns updated weights for federated Avg
 	
 	Helper methods used by socket events:
 	'reconnect'		=> reconnection helper method: Calls connect method periodically. Requires further improvement 
@@ -98,6 +99,7 @@ def receive_model(json):
 	if len(weights) > 0:
 		model.init_model(create_keras_model, weights)
 	print("model fetched successfully!")
+	print_task_inputs()
 
 
 @sock.on('evaluate_edge')
@@ -108,6 +110,33 @@ def eval_model(*args, **kwargs):
 		message('eval_results', report)
 	else:
 		message("eval_results :", "Evaluation failed")
+	print_task_inputs()
+
+
+@sock.on('train_model')
+def train_model(json, *args, **kwargs):
+	weights = []
+	for key, value in json.items():
+		weights.append(np.array(value))
+	if len(weights) > 0:
+		model.init_model(create_keras_model, weights)
+
+		training_dict = {'batch_size': 64, 'epochs': 2, 'verbose': 1, 'validation_split': 0.2}
+		# training_dict = {'epochs': 10, 'validation_split': 0.33}
+		hist = model.edge_train(client_train_dict=training_dict)
+		print(f"Hist: {hist.history.keys()}")
+
+		report = {
+			'training_accuracy': hist.history['accuracy'][-1],
+			'training_loss': hist.history['loss'][-1],
+			'val_accuracy': hist.history['val_accuracy'][-1],
+			'val_loss': hist.history['val_loss'][-1],
+			'weights': model.get_weights()
+		}
+		print(f"Model evaluation report: {report} \n\n")
+		message('training_results', report)
+	else:
+		message("training_results: ", "Training failed")
 	print_task_inputs()
 
 
