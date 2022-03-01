@@ -1,7 +1,5 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_socketio import SocketIO, emit
-
-import tensorflow_federated as tff
 
 from tf_federated.aggregator_model import AggregatorModel
 # from keras_utils import
@@ -32,10 +30,14 @@ def disconnected():
 	edgeNodes.pop(nodeID)
 
 
+def get_global_model():
+	return aggregator.trainable_variables
+
+
 @socket.on('fetch_model')
-def fetch_model_request():
-	model_variables = aggregator.trainable_variables
-	emit("fetch_model", {'model_variables': model_variables})
+def fetch_model():
+	print("fetch_model")
+	emit("fetch_model", get_global_model())
 
 
 """ 
@@ -44,7 +46,31 @@ def fetch_model_request():
 """
 
 
-@app.route('/')
-def index():
+@app.route('/json')
+def get_status():
 	registered_users = {'active': edgeNodes, 'inactive': inactiveNodes, "sid_mapper": sid_mapper}
 	return jsonify(registered_users)
+
+
+@app.route('/', methods = ["GET", "POST"])
+def index():
+	if request.method == 'POST':
+		for nodeID, node in edgeNodes.items():
+			emit('evaluate_edge', "ping", namespace='/', to=node['sid'])
+	return render_template('index.html')
+
+
+@app.route('/eval')
+def fetch_eval():
+	for nodeID, node in edgeNodes.items():
+		emit("evaluate_edge", "ping", namespace='/', to=node['sid'])
+	return jsonify({"status": 200, "response": "success"})
+
+
+@app.route('/send')
+def send_global_model():
+	model_data = get_global_model()
+	print(type(model_data))
+	for nodeID, node in edgeNodes.items():
+		emit("fetch_model", model_data, namespace='/', to=node['sid'])
+	return jsonify({"status": 200, "response": "success"})
