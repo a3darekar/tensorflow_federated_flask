@@ -23,7 +23,14 @@ def assemble_data():
 def evaluate_model(x, y):
 	global NODE_STATUS
 	NODE_STATUS = status['eval']
-	return model.evaluate(x, y)
+	train_score = model.evaluate(model.x_train, model.y_train)
+	test_score = model.evaluate(x_test, y_test)
+	return {
+		"training_loss": train_score[0],
+		"training_accuracy": train_score[1],
+		"test_loss": test_score[0],
+		"test_accuracy": test_score[1],
+	}
 
 
 def fetch_model():
@@ -96,9 +103,8 @@ def receive_model(json):
 @sock.on('evaluate_edge')
 def eval_model(*args, **kwargs):
 	if x_test is not None and y_test is not None:
-		eval_loss, eval_score = evaluate_model(x_test, y_test)
-		report = {'loss': eval_loss, 'score': eval_score}
-		print(f"Evaluation Accuracy: {report} \n\n")
+		report = evaluate_model(x_test, y_test)
+		print(f"Model evaluation report: {report} \n\n")
 		message('eval_results', report)
 	else:
 		message("eval_results :", "Evaluation failed")
