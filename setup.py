@@ -2,6 +2,7 @@ import os
 
 DEBUG = bool(os.getenv('DEBUG', False))
 DATA_FILE = str(os.getenv('DATA_FILE', False))
+AGGR_MODEL_FILE = str(os.getenv('AGGR_MODEL_FILE', 'weights.npy'))
 INPUT_SHAPE = list(map(int, str(os.getenv('INPUT_SHAPE', False)).split()))
 CLASS_COUNT = int(os.getenv('CLASS_COUNT', False))
 APP_URL = str(os.getenv('ADMIN_URL', "http://127.0.0.1:5000"))
