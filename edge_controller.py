@@ -6,7 +6,7 @@ import numpy as np
 import socketio
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
-from setup import NODE_ID, APP_URL, DATA_FILE, status
+from setup import NODE_ID, APP_URL, DATA_FILE, status, MODEL_WEIGHTS_FILE
 from tf_federated.edge_model import Client
 from tf_federated.keras_utils import create_keras_model
 from sklearn.model_selection import train_test_split
@@ -63,7 +63,7 @@ def reconnect():
 
 
 @sock.event
-def connect_error():
+def connect_error(error):
 	print("Problem establishing connection. Trying in 5 seconds")
 	try:
 		time.sleep(5)
@@ -94,8 +94,8 @@ def receive_model(json):
 
 
 @sock.on('evaluate_edge')
-def eval_model():
-	if x_test and y_test:
+def eval_model(*args, **kwargs):
+	if x_test is not None and y_test is not None:
 		score = evaluate_model(x_test, y_test)
 		message('eval_results: ', score)
 	else:
@@ -142,7 +142,7 @@ def init_model(_model):
 	x_data, labels = fetch_data()
 	x_train, _x_test, y_train, _y_test = train_test_split(x_data, labels, test_size=0.33)
 	y_train, _y_test = to_categorical(y_train), to_categorical(_y_test)
-	_model.init_model(create_keras_model, model_weights=f"weights_{NODE_ID}.npy")
+	_model.init_model(create_keras_model, model_weights=MODEL_WEIGHTS_FILE)
 	_model.receive_data(x_train, y_train)
 	global NODE_STATUS
 	NODE_STATUS = status['idle']
