@@ -93,7 +93,7 @@ def disconnect():
 @sock.on('fetch_model')
 def receive_model(json):
 	weights = []
-	for key, value in json['model_variables'].items():
+	for key, value in json.items():
 		weights.append(np.array(value))
 	if len(weights) > 0:
 		model.init_model(create_keras_model, weights)
@@ -195,7 +195,7 @@ def run():
 					training_dict = {'batch_size': 64, 'epochs': 10, 'verbose': 1, 'validation_split': 0.2}
 					# training_dict = {'epochs': 10, 'validation_split': 0.33}
 					hist = model.edge_train(client_train_dict=training_dict)
-					print(f"Hist: {hist}")
+					print(f"Hist: {hist.history['accuracy']}")
 				if task.strip().lower() == '4':
 					model.save_local_weights()
 				print("\n\n\n")
