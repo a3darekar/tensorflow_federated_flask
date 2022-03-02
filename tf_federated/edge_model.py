@@ -38,6 +38,13 @@ class Client:
 		print(model.summary())
 		self.model = model
 
+	def get_weights(self):
+		weights_serialized = []
+		weights = self.model.get_weights()
+		for weight in weights:
+			weights_serialized.append(weight.tolist())
+		return weights_serialized
+
 	def receive_data(self, x, y):
 		self.x_train = x.astype("float32") / 255
 		self.y_train = y
