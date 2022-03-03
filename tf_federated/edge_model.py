@@ -38,13 +38,6 @@ class Client:
 		print(model.summary())
 		self.model = model
 
-	def get_weights(self):
-		weights_serialized = []
-		weights = self.model.get_weights()
-		for weight in weights:
-			weights_serialized.append(weight.tolist())
-		return weights_serialized
-
 	def receive_data(self, x, y):
 		self.x_train = x.astype("float32") / 255
 		self.y_train = y
@@ -52,12 +45,36 @@ class Client:
 	def receive_and_init_model(self, model_fn: Callable, model_weights):
 		self.init_model(model_fn, model_weights)
 
-	def edge_train(self, client_train_dict: dict):
+	def local_train(self, client_train_dict: dict):
 		if self.model is None:
 			raise ValueError("Model is not created for client: {0}".format(self.client_id))
 
 		hist = self.model.fit(self.x_train, self.y_train, **client_train_dict)
 		return hist
+
+	def edge_train(self, client_train_dict: dict):
+		import tensorflow as tf
+		if self.model is None:
+			raise ValueError("Model is not created for client: {0}".format(self.client_id))
+		x = self.x_train[:2]
+		y = self.y_train[:2]
+		predictions, flat_labels = tf.cast(self.model.predict(x), tf.float32), tf.cast(y, tf.float32)
+		loss = -tf.reduce_mean(
+			tf.reduce_sum(flat_labels * predictions, axis=[1])
+		)
+		num_examples = tf.cast(y.shape[0], tf.float32)
+		accuracy = tf.reduce_sum(
+			tf.cast(tf.equal(tf.math.argmax(predictions, 1), tf.math.argmax(flat_labels, 1)), tf.float32)
+		) / num_examples
+		loss_sum = loss * num_examples
+		forward_pass_metrics = {
+			'predictions': predictions.numpy().tolist(),
+			'loss': str(loss.numpy()),
+			'num_examples': str(num_examples.numpy()),
+			'loss_sum': str(loss_sum.numpy()),
+			'accuracy': str(accuracy.numpy()),
+		}
+		return forward_pass_metrics
 
 	def reset_model(self):
 		get_rid_of_the_models(self.model)
