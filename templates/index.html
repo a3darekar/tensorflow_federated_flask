@@ -1,0 +1,89 @@
+<html>
+    <head>
+        <title>Federated Tensorflow</title>
+        <script src="//unpkg.com/alpinejs" defer></script>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    </head>
+    <body>
+        <div x-data="dataHandler()" x-init="mounted()">
+        <button x-on:click="fetch_eval()">Evaluate</button>
+        <button x-on:click="update_global_model()">Share Global model</button>
+        <button x-on:click="start_training()">Start Federated Training</button>
+        <h4>Active Nodes</h4>
+            <template x-for="node in active">
+        <div class="node">
+            <pre>
+            <span x-text="node.nodeID"></span>:
+            <span x-text="node.node_status"></span>
+            <div x-show="'eval_report' in node">
+            Train Accuracy: <span x-text="node.eval_report.training_accuracy"></span> (loss: <span x-text="node.eval_report.training_loss"></span>)
+            Test Accuracy: <span x-text="node.eval_report.test_accuracy"></span> (loss: <span x-text="node.eval_report.test_loss"></span>)
+            </div>
+            </pre>
+        </div>
+            </template>
+        <h4>Inactive Nodes</h4>
+            <div x-show="inactive">
+                <template x-for="node in inactive">
+        <div class="node">
+            <pre>
+            <span x-text="node.nodeID"></span>:
+            <span x-text="node.node_status"></span>
+            <div x-show="'eval_report' in node">
+            Train Accuracy: <span x-text="node.eval_report.training_accuracy"></span> (loss: <span x-text="node.eval_report.training_loss"></span>)
+            Test Accuracy: <span x-text="node.eval_report.test_accuracy"></span> (loss: <span x-text="node.eval_report.test_loss"></span>)
+            </div>
+            </pre>
+        </div>
+                </template>
+            </div>
+
+        </div>
+        <script>
+            function dataHandler() {
+                return {
+                    active: null,
+                    inactive: null,
+                    eval: false,
+                    mounted() {
+                        this.fetch_node_status()
+				        window.setInterval(() => {
+                            this.fetch_node_status()
+				        }, 3000)
+                    },
+                    async fetch_node_status() {
+                        let response = await axios.get(document.URL + 'json')
+                        this.active = response.data.active;
+                        this.inactive = response.data.inactive;
+                    },
+                    async fetch_eval($event) {
+					    console.log("Requesting Eval")
+                        let response = await axios.get(document.URL + 'eval')
+                        if (response.data.status === 200) {
+                            let message = 'Model will be updated once reports are received'
+                            console.log(message)
+                        }
+                    },
+                    async update_global_model($event) {
+                        console.log("Sending global model to active edge nodes")
+                        let response = await axios.get(document.URL + 'send')
+                        if (response.data.status === 200) {
+                            let message = 'Models will be updated soon'
+                            console.log(message)
+                        }
+				    },
+
+                    async start_training($event) {
+                        console.log("Sending global model to active edge nodes")
+                        let response = await axios.get(document.URL + 'train')
+                        if (response.data.status === 200) {
+                            let message = 'Models will be updated soon'
+                            console.log(message)
+                        }
+				    },
+                }
+            }
+        </script>
+
+    </body>
+</html>
