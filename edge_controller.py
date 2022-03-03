@@ -109,8 +109,9 @@ def eval_model(*args, **kwargs):
 		print(f"Model evaluation report: {report} \n\n")
 		message('eval_results', report)
 	else:
-		message("eval_results :", "Evaluation failed")
+		message("eval_results", "Evaluation failed")
 	print_task_inputs()
+	return None
 
 
 @sock.on('train_model')
@@ -123,25 +124,18 @@ def train_model(json, *args, **kwargs):
 
 		training_dict = {'batch_size': 64, 'epochs': 2, 'verbose': 1, 'validation_split': 0.2}
 		# training_dict = {'epochs': 10, 'validation_split': 0.33}
-		hist = model.edge_train(client_train_dict=training_dict)
-		print(f"Hist: {hist.history.keys()}")
-
-		report = {
-			'training_accuracy': hist.history['accuracy'][-1],
-			'training_loss': hist.history['loss'][-1],
-			'val_accuracy': hist.history['val_accuracy'][-1],
-			'val_loss': hist.history['val_loss'][-1],
-			'weights': model.get_weights()
-		}
-		print(f"Model evaluation report: {report} \n\n")
-		message('training_results', report)
+		metrics = model.edge_train(client_train_dict=training_dict)
+		message('training_results', metrics)
 	else:
-		message("training_results: ", "Training failed")
+		message("training_results", "Training failed")
 	print_task_inputs()
 
 
 def message(event, data):
-	sock.emit(event, data)
+	try:
+		sock.emit(event, data)
+	except Exception as e:
+		print(e)
 
 
 def await_reconnection_command():
@@ -219,15 +213,15 @@ def run():
 				if task.strip().lower() == '2':
 					score = evaluate_model(x_test, y_test)
 					if score:
-						print("Evaluation Accuracy: %.2f" % score[1])
+						print("Evaluation Accuracy: %.2f" % score)
 				if task.strip().lower() == '3':
 					training_dict = {'batch_size': 64, 'epochs': 10, 'verbose': 1, 'validation_split': 0.2}
 					# training_dict = {'epochs': 10, 'validation_split': 0.33}
-					hist = model.edge_train(client_train_dict=training_dict)
+					hist = model.local_train(client_train_dict=training_dict)
 					print(f"Hist: {hist.history['accuracy']}")
 				if task.strip().lower() == '4':
 					model.save_local_weights()
-				print("\n\n\n")
+					print("\n\n\n")
 	except KeyboardInterrupt:
 		print("KeyboardInterrupt occurred.")
 		print('Session Interrupted by User.')

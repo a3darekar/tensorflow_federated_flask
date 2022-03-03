@@ -2,9 +2,10 @@ from flask import Flask, jsonify, request, render_template
 from flask_socketio import SocketIO, emit
 
 from tf_federated.aggregator_model import AggregatorModel
+
 # from keras_utils import
 
-edgeNodes, inactiveNodes, sid_mapper = {}, {}, {}
+edgeNodes, inactiveNodes, sid_mapper, train_dict = {}, {}, {}, {}
 app = Flask(__name__)
 socket = SocketIO(app)
 aggregator = AggregatorModel()
@@ -36,7 +37,6 @@ def get_global_model():
 
 @socket.on('fetch_model')
 def fetch_model(*args, **kwargs):
-	print("fetch_model")
 	emit("fetch_model", get_global_model())
 
 
@@ -47,9 +47,10 @@ def eval_report_handler(json):
 
 
 @socket.on('training_results')
-def eval_report_handler(json):
+def training_result_handler(json):
 	edge_node = sid_mapper[request.sid]
-	edgeNodes[edge_node].update({"training_results": json})
+	print(edge_node)
+	train_dict[edge_node] = json
 
 
 """ 
@@ -60,7 +61,7 @@ def eval_report_handler(json):
 
 @app.route('/json')
 def get_status():
-	registered_users = {'active': edgeNodes, 'inactive': inactiveNodes, "sid_mapper": sid_mapper}
+	registered_users = {'active': edgeNodes, 'inactive': inactiveNodes, "sid_mapper": sid_mapper, 'train': train_dict}
 	return jsonify(registered_users)
 
 
@@ -84,12 +85,13 @@ def send_global_model():
 	model_data = get_global_model()
 	for nodeID, node in edgeNodes.items():
 		emit("fetch_model", model_data, namespace='/', to=node['sid'])
-	return jsonify({"status": 200, "response": "success"})\
+	return jsonify({"status": 200, "response": "success"})
 
 
 @app.route('/train')
 def start_tff_training():
-	model_data = get_global_model()
+	global train_dict
+	model_data, train_dict = get_global_model(), {}
 	for nodeID, node in edgeNodes.items():
 		emit("train_model", model_data, namespace='/', to=node['sid'])
 	return jsonify({"status": 200, "response": "success"})
