@@ -9,6 +9,7 @@ edgeNodes, inactiveNodes, sid_mapper, train_dict = {}, {}, {}, {}
 app = Flask(__name__)
 socket = SocketIO(app)
 aggregator = AggregatorModel()
+aggregator_process, state = aggregator.init_aggregator()
 
 
 @socket.on('join')
