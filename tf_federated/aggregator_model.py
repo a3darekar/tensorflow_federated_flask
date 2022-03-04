@@ -5,7 +5,7 @@ from typing import Callable, List, OrderedDict
 import numpy as np
 import tensorflow as tf
 import tensorflow_federated as tff
-from setup import AGGR_MODEL_FILE
+from setup import AGGR_MODEL_FILE, AGGR_OPTIMIZER_LEARNING_RATE, CLIENT_OPTIMIZER_LEARNING_RATE
 from tf_federated.keras_utils import create_variables, forward_pass, predict_on_batch, aggregate_metrics, \
 	get_local_metrics, create_keras_model, input_spec
 
@@ -92,3 +92,21 @@ class AggregatorModel(tff.learning.Model):
 			loss=tf.function(func=lambda x: x[0] / x[1]),
 			accuracy=tf.function(func=lambda x: x[0] / x[1])
 		)
+
+	def init_aggregator(self, process=None):
+		if process == 'SGD':
+			# init avg aggregator
+			aggregator_process = tff.learning.build_federated_sgd_process(
+				model_fn=self.get_model,
+				client_optimizer_fn=lambda: tf.keras.optimizers.SGD(learning_rate=CLIENT_OPTIMIZER_LEARNING_RATE),
+				server_optimizer_fn=lambda: tf.keras.optimizers.SGD(learning_rate=AGGR_OPTIMIZER_LEARNING_RATE),
+			)
+		else:
+			# init avg aggregator
+			aggregator_process = tff.learning.build_federated_averaging_process(
+				model_fn=self.get_model,
+				client_optimizer_fn=lambda: tf.keras.optimizers.SGD(learning_rate=CLIENT_OPTIMIZER_LEARNING_RATE),
+			)
+		init_state = aggregator_process.initialize()
+		print(init_state)
+		return aggregator_process, init_state
